@@ -1,5 +1,5 @@
 ---
-title: "Are Manual Transmissions Better Consumers"
+title: "Are Manual Transmissions Better Consumers?"
 output:
   pdf_document:
     fig_height: 3.8
@@ -9,7 +9,7 @@ output:
 
 The `mtcars` dataset is investigated. Relationship between variables in the dataset and `MPG`, the outcome, is explored. At the first look, cars with manual transmission make, on average, **7.24** more miles per gallon than cars with automatic transmission. However, there are confounding variables. These confounding variables are alsa highly correlated to each other. A selection based on adjusted r squares of fitted models gave the best observable as common logarithm of the `disp` variable, the displacement in cubic inches. First, a model with two lines, same slope revealed only a difference of **0.326** miles per gallon and p value is **0.79**. Second, a model with two lines different slope obtained. This model shows **2.72** miles per gallon difference for 100 cu. in. displacement and **-2.27** difference for 350 cu. in. displacements. Both models, we **fail to reject** the null hypothesis that there is no difference between manual transmission and automatic transmission.
 
-The echo of R code is disabled to have a compact report. A copy of R Markdown file that produced this document can be foun at the github repository .
+The echo of R code is disabled to have a compact report. A copy of R Markdown file that produced this document can be foun at the github repository `https://github.com/tonesofblue/regmods-courseproject`.
 
 # Exploratory Data Analyses
 
