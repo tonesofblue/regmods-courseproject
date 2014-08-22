@@ -1,0 +1,158 @@
+---
+title: "Are Manual Transmissions Better Consumers"
+output:
+  pdf_document:
+    fig_height: 3.8
+---
+
+# Exclusive Summary
+
+The `mtcars` dataset is investigated. Relationship between variables in the dataset and `MPG`, the outcome, is explored. At the first look, cars with manual transmission make, on average, **7.24** more miles per gallon than cars with automatic transmission. However, there are confounding variables. These confounding variables are alsa highly correlated to each other. A selection based on adjusted r squares of fitted models gave the best observable as common logarithm of the `disp` variable, the displacement in cubic inches. First, a model with two lines, same slope revealed only a difference of **0.326** miles per gallon and p value is **0.79**. Second, a model with two lines different slope obtained. This model shows **2.72** miles per gallon difference for 100 cu. in. displacement and **-2.27** difference for 350 cu. in. displacements. Both models, we **fail to reject** the null hypothesis that there is no difference between manual transmission and automatic transmission.
+
+The echo of R code is disabled to have a compact report. A copy of R Markdown file that produced this document can be foun at the github repository .
+
+# Exploratory Data Analyses
+
+```{r Data, echo=FALSE}
+data(mtcars)
+
+## In the original data ransmission system variable, am, is a numeric variable.
+## Convert it to a dummy factor variable.
+fam <- factor(mtcars$am, labels = c("Automatic", "Manual"))
+
+## Function to simplify regression plots.
+plotLine <- function (lm, ...) {
+    plot(lm$model[[2]], lm$model[[1]], ...)
+    abline(lm)
+}
+
+```
+
+## Average MPG by Transmission Type
+
+Average `MPG` may be obtained simply by fitting a model with factor variable transmission as observable:
+
+```{r Average_MPG, echo=FALSE}
+m0 <- lm(mpg ~ fam, data = mtcars)
+round(m0$coefficients, 2)
+```
+
+Therefore, cars with manual transmission make, on average, 7.24 more miles per gallon than cars with automatic transmission. One can say that manual transmissions are better than automatic ones considering `MPG`. Although there is a variability in `MPG` by transmission type, one cannot conclude that the cause of this variability is transmission type. There may be confounding variables. Boxplots in Figure 1 shows `MPG` distributions by transmission types.
+
+## Other Factors Correlated with MPG
+
+After investigating `mtcars` data, correlation between MPG and observables wt, weight; disp, displacement; and, hp, horse power are found to be high. Correlation between observables are high also, hence, a multi variable model would not be suitable. Models with one observable are compared below:
+
+```{r Counfounding_Models, echo=FALSE}
+y <- mtcars$mpg
+conf  <- list(list(x = mtcars$wt, lab = "wt (lb/1000)"), 
+              list(x = mtcars$disp,"disp (cu. in.)"),
+              list(x = mtcars$hp, lab = "hp (hp)"), 
+              list(x = log10(mtcars$wt), lab = "log10(wt) (log10(lb/1000))"),
+              list(x = log10(mtcars$disp), lab = "log10(disp) (log10(cu. in.))"), 
+              list(x = log10(mtcars$hp), lab = "log10(hp) (log10(hp))"))
+conf <- lapply(conf, function(a) { list( x = a$x, lab = a$lab, lm = lm(y ~ a$x))} )
+disp  <- matrix(sapply(conf, function(a) { summary(a$lm)$adj.r.squared}), nrow = 3)
+colnames(disp) <- c("-", "log10")
+rownames(disp) <- c("wt", "disp", "hp")
+disp
+
+```
+The model with the observable `log10(disp)` has the highest adjusted r squared. 
+
+# Regression Models
+
+The common logarithm of displacement, `log10(disp)`, is chosen as observation variable and the transmission type is dummy factor variable. Two adjusted regression models are observed Using these variables: (1) Model with two lines, same slope, and, (2) Model with two lines, different slope.
+
+```{r Regression_Models, echo=FALSE}
+x <- conf[[5]]$lm$model[[2]]; y <- conf[[5]]$lm$model[[1]]
+sameSlopeModel <- lm(y ~ x + fam)
+diffSlopeModel <- lm(y ~ x * fam)
+```
+
+## Model with Two Lines Same Slope
+
+```{r Same_Slope_Model, echo=FALSE}
+summary(sameSlopeModel)$coefficients
+```
+
+Cars with manual transmissions make, only, 0.326 more miles per gallon on average than cars with automatic transmission. There is no significant difference between manual transmission and automatic transmission.
+
+The plot of the model is shown in Figure 3.
+
+## Model with Two Lines Different Slope
+
+```{r Different_Slope_Model, echo=FALSE}
+summary(diffSlopeModel)$coefficients
+aux <- predict(diffSlopeModel, 
+               newdata = data.frame(x = c(log10(100),log10(100),log10(350),log10(350)), 
+                                    fam = c("Manual", "Automatic", "Manual", "Automatic")))
+aux <- matrix(c(aux[1], aux[2], aux[1] - aux[2], aux[3], aux[4], aux[3]- aux[4]), nrow = 2, byrow = TRUE);
+rownames(aux) <- c("100 (cu. in.)","350 (cu. in.)"); colnames(aux) <- c("Manual", "Automatic", "Difference")
+round(aux, 2)
+```
+
+The difference of miles per gallon varies with common logarithm of displacements. Cars with 100 cu. in. displacement and manual transmissions make **2.72** *more* miles per gallon on average than cars with 100 cu. in. displacement and automatic transmission. On the other hand, cars with 350 cu. in. displacement and manual transmissions make **2.27** *less* miles per gallon on average than cars with 350 cu. in. displacement and automatic transmission. However, the p-values of coefficients are greater than 0.05, and, are not significant.
+
+The plot of the model is shown in Figure 3.
+
+## Diagnostics
+Figure 4 shows diagnostics for regression model two lines with same slope. Conditions of regression are good considering plots.
+
+Figure 5 shows diagnostics for regression model two lines with different slope. Similary, diagnostics plots are in good conditions..
+
+# Appendix
+
+```{r Figure_1, echo=FALSE}
+plot(fam, mtcars$mpg, xlab = "Transmission Type", ylab = "MPG (Miles/Gallon)",
+     main = "Variation of MPG by Transmission Type")
+```
+\begin{center}
+\textbf{Figure 1. Variation of MPG by Transmission Type}
+\end{center}
+```{r Figure_2, echo=FALSE}
+old.mfrow <- par("mfrow")
+par(mfrow = c(2,3))
+dummy <- lapply(conf, function(a) {plotLine(a$lm, xlab = a$lab, ylab = "MPG (Miles/Gallon)")})
+par(mfrow = old.mfrow)
+```
+\begin{center}
+\textbf{Figure 2. Comparison of Models with Potentially Confounding Observables}
+\end{center}
+```{r Figure_3, echo=FALSE}
+color <- ifelse(fam == "Automatic", "red", "blue")
+old.mfrow <- par("mfrow")
+par(mfrow = c(1,2))
+plot(sameSlopeModel$model[[2]], sameSlopeModel$model[[1]], pch = 19, col = color,
+     xlab = "log10(disp) (log10(cu. in))", ylab = "MPG (Miles/Gallon)", main = "Model with Same Slope")
+abline(sameSlopeModel$coefficients[1], sameSlopeModel$coefficients[2], col = "red")
+abline(sameSlopeModel$coefficients[1] + sameSlopeModel$coefficients[3], sameSlopeModel$coefficients[2], col = "blue")
+
+plot(diffSlopeModel$model[[2]], diffSlopeModel$model[[1]], pch = 19, col = color,
+     xlab = "log10(disp) (log10(cu. in))", ylab = "MPG (Miles/Gallon)", main = "Model with Different Slope")
+abline(diffSlopeModel$coefficients[1], diffSlopeModel$coefficients[2], col = "red")
+abline(diffSlopeModel$coefficients[1] + diffSlopeModel$coefficients[3], 
+       diffSlopeModel$coefficients[2] + diffSlopeModel$coefficients[4], col = "blue")
+par(mfrow = old.mfrow)
+```
+\begin{center}
+\textbf{Figure 3. Comparison of Models with Same Slope and Different Slope}
+\end{center}
+```{r Figure_4, echo=FALSE, fig.height=4}
+old.mfrow <- par("mfrow")
+par(mfrow = c(2,2))
+plot(sameSlopeModel)
+par(mfrow = old.mfrow)
+```
+\begin{center}
+\textbf{Figure 4. Diagnostics for Model with Same Slope}
+\end{center}
+```{r Figure_5, echo=FALSE, fig.height=4}
+old.mfrow <- par("mfrow")
+par(mfrow = c(2,2))
+plot(diffSlopeModel)
+par(mfrow = old.mfrow)
+```
+\begin{center}
+\textbf{Figure 5. Diagnostics for Model with Different Slope}
+\end{center}
